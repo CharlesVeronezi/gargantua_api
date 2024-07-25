@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  db:
+    image: mongo:latest
+    hostname: db
+    ports:
+      - "27017:27017"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.7"
+          memory: "1GB"
+    volumes:
+      - mongo-db:/data/db
+
+  api1:
+    build: /
+    hostname: api1
+    restart: always
+    environment:
+      HTTP_PORT: 8080
+    depends_on:
+      - db
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "512m"
+
+  api2:
+    build: /
+    hostname: api2
+    restart: always
+    environment:
+      HTTP_PORT: 8081
+    depends_on:
+      - db
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "512m"
+
+  nginx:
+    image: nginx
+    hostname: api
+    volumes:
+      - ./scripts/nginx/:/etc/nginx/
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "512m"
+
+volumes:
+  mongo-db:
+
+networks:
+  default:
+    driver: bridge
