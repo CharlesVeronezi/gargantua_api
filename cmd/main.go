@@ -5,18 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"gargantua/internal/infra/httpapi"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/redis/rueidis"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -62,8 +64,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+		//Conexao do cliente redis
+		rdClient, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{"cache:6379"}})
+		if err != nil {
+			return err
+		}
+		rdClient.B().Ping()
+
 	// Configuração da API e do roteador
-	si := httpapi.NewAPI(client, logger)
+	si := httpapi.NewAPI(client, logger, rdClient)
 	r := chi.NewMux()
 	r.Use(middleware.RequestID, middleware.Recoverer)
 	r.Mount("/", httpapi.Handler(si))

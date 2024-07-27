@@ -62,8 +62,21 @@ services:
           cpus: "0.25"
           memory: "512m"
 
+  cache:
+    hostname: cache
+    image: redis:latest
+    command: redis-server --save "" --appendonly no
+    ports:
+      - '6379:6379'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: '512mb'
+
 volumes:
   mongo-db:
+
 
 networks:
   default:
